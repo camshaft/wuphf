@@ -1,0 +1,14 @@
+{application, wuphf, [
+  {description, "share all the things"},
+  {vsn, "0.1.0"},
+  {modules, []},
+  {registered, []},
+  {applications, [
+    kernel,
+    stdlib,
+    cowboy,
+    gun
+  ]},
+  {mod, {wuphf_app, []}},
+  {env, []}
+]}.
