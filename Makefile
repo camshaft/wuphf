@@ -23,6 +23,8 @@ SHELL_DEPS = rl
 
 dep_rl = git https://github.com/camshaft/rl.git
 
+default: all bin/start
+
 include erlang.mk
 
 repl: all bin/start
