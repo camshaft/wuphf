@@ -18,6 +18,7 @@ dep_cowboy_dev_logger = git https://github.com/camshaft/cowboy_dev_logger.git
 
 dep_gun = git https://github.com/extend/gun master
 dep_json_stringify = git https://github.com/camshaft/json_stringify.git
+dep_simple_env = git https://github.com/camshaft/simple_env.git
 
 SHELL_DEPS = rl
 
