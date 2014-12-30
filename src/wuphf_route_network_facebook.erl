@@ -46,7 +46,7 @@ is_fb_app(Req) ->
 share(Params, Req) ->
   Out = share_params(Params, [
     {<<"display">>, <<"popup">>},
-    {<<"redirect_uri">>, cowboy_base:resolve([<<"redirect?network=facebook">>], Req)}
+    {<<"redirect_uri">>, redirect_url(Req)}
   ]),
   <<"https://www.facebook.com/dialog/share?", (cow_qs:qs(Out))/binary>>.
 
@@ -63,7 +63,7 @@ feed(Params, Req) ->
   Out = feed_params(Params, [
     {<<"display">>, <<"popup">>},
     {<<"e2e">>, <<"{}">>},
-    {<<"redirect_uri">>, cowboy_base:resolve([<<"redirect?network=facebook">>], Req)}
+    {<<"redirect_uri">>, redirect_url(Req)}
   ]),
   <<"https://www.facebook.com/dialog/feed?", (cow_qs:qs(Out))/binary>>.
 
@@ -86,7 +86,7 @@ feed_params([_|Rest], Acc) ->
 
 sharer(Params, Req) ->
   Out = sharer_params(Params, [
-    {<<"redirect_uri">>, cowboy_base:resolve([<<"redirect?network=facebook">>], Req)}
+    {<<"redirect_uri">>, redirect_url(Req)}
   ]),
   <<"https://www.facebook.com/sharer.php?", (cow_qs:qs(Out))/binary>>.
 
@@ -96,3 +96,11 @@ sharer_params([{<<"url">>, Url}|Rest], Acc) ->
   sharer_params(Rest, [{<<"u">>, Url}|Acc]);
 sharer_params([_|Rest], Acc) ->
   sharer_params(Rest, Acc).
+
+redirect_url(Req) ->
+  {EventUrl, _} = cowboy_req:qs_val(<<"event_url">>, Req, <<>>),
+  Out = [
+    {<<"network">>, <<"facebook">>},
+    {<<"event_url">>, EventUrl}
+  ],
+  cowboy_base:resolve([<<"redirect?", (cow_qs:qs(Out))/binary>>], Req).
