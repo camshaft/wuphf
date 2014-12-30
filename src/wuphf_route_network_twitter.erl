@@ -14,7 +14,7 @@ handle(Req, State) ->
     {<<"location">>, share(Params, Req2)}
   ], Req2),
 
-  wuphf_events:queue(<<"twitter">>, <<"open">>, Req3),
+  wuphf_events:queue(<<"twitter">>, <<"opened">>, Req3),
 
   {ok, Req3, State}.
 

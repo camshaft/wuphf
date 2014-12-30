@@ -14,7 +14,7 @@ handle(Req, State) ->
     {<<"location">>, choose(Params, Req2)}
   ], Req2),
 
-  wuphf_events:queue(<<"facebook">>, <<"open">>, Req3),
+  wuphf_events:queue(<<"facebook">>, <<"opened">>, Req3),
 
   {ok, Req3, State}.
 
