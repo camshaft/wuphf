@@ -52,7 +52,7 @@ share(Params, Req) ->
 
 share_params([], Acc) ->
   Acc;
-share_params([{<<"app_id">>, _} = AppID|Rest], Acc) ->
+share_params([{<<"fb_app_id">>, _} = AppID|Rest], Acc) ->
   share_params(Rest, [AppID|Acc]);
 share_params([{<<"url">>, Url}|Rest], Acc) ->
   share_params(Rest, [{<<"href">>, Url}|Acc]);
@@ -71,7 +71,7 @@ feed_params([], Acc) ->
   Acc;
 feed_params([{<<"title">>, Title}|Rest], Acc) ->
   feed_params(Rest, [{<<"name">>, Title}|Acc]);
-feed_params([{<<"app_id">>, _} = AppID|Rest], Acc) ->
+feed_params([{<<"fb_app_id">>, _} = AppID|Rest], Acc) ->
   feed_params(Rest, [AppID|Acc]);
 feed_params([{<<"caption">>, _} = Caption|Rest], Acc) ->
   feed_params(Rest, [Caption|Acc]);

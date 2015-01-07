@@ -12,7 +12,7 @@ handle(Req, State) ->
   {Title, Req2} = cowboy_req:qs_val(<<"title">>, Req, <<>>),
   {Description, Req2} = cowboy_req:qs_val(<<"description">>, Req, <<>>),
   {Image, Req2} = cowboy_req:qs_val(<<"image">>, Req, <<>>),
-  {AppID, Req2} = cowboy_req:qs_val(<<"app_id">>, Req, <<>>),
+  {AppID, Req2} = cowboy_req:qs_val(<<"fb_app_id">>, Req, <<>>),
   {Caption, Req2} = cowboy_req:qs_val(<<"caption">>, Req, <<>>),
   {Via, Req2} = cowboy_req:qs_val(<<"via">>, Req, <<>>),
   {Hashtags, Req2} = cowboy_req:qs_val(<<"hashtags">>, Req, <<>>),
@@ -20,7 +20,7 @@ handle(Req, State) ->
 
   Body = json_stringify:from_term(#{
     <<"facebook">> => network(#{
-      <<"app_id">> => #{
+      <<"fb_app_id">> => #{
         <<"type">> => <<"text">>,
         <<"value">> => AppID
       },
