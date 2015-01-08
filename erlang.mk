@@ -30,7 +30,14 @@ gen_verbose = $(gen_verbose_$(V))
 
 # Core targets.
 
-all:: deps app rel
+ifneq ($(words $(MAKECMDGOALS)),1)
+.NOTPARALLEL:
+endif
+
+all::
+	@$(MAKE) --no-print-directory deps
+	@$(MAKE) --no-print-directory app
+	@$(MAKE) --no-print-directory rel
 
 clean::
 	$(gen_verbose) rm -f erl_crash.dump
@@ -42,7 +49,7 @@ help::
 		"erlang.mk (version $(ERLANG_MK_VERSION)) is distributed under the terms of the ISC License." \
 		"Copyright (c) 2013-2014 Loïc Hoguin <essen@ninenines.eu>" \
 		"" \
-		"Usage: [V=1] make [target]" \
+		"Usage: [V=1] make [-jNUM] [target]" \
 		"" \
 		"Core targets:" \
 		"  all         Run deps, app and rel targets in that order" \
@@ -58,7 +65,8 @@ help::
 		"The target clean only removes files that are commonly removed." \
 		"Dependencies and releases are left untouched." \
 		"" \
-		"Setting V=1 when calling make enables verbose mode."
+		"Setting V=1 when calling make enables verbose mode." \
+		"Parallel execution is supported through the -j Make flag."
 
 # Core functions.
 
@@ -135,6 +143,8 @@ define dep_fetch
 	elif [ "$$$$VS" = "hg" ]; then \
 		hg clone -U $$$$REPO $(DEPS_DIR)/$(1); \
 		cd $(DEPS_DIR)/$(1) && hg update -q $$$$COMMIT; \
+	elif [ "$$$$VS" = "svn" ]; then \
+		svn checkout $$$$REPO $(DEPS_DIR)/$(1); \
 	else \
 		echo "Unknown or invalid dependency: $(1). Please consult the erlang.mk README for instructions." >&2; \
 		exit 78; \
@@ -416,6 +426,56 @@ tpl_gen_server = "-module($(n))." \
 	"" \
 	"code_change(_OldVsn, State, _Extra) ->" \
 	"	{ok, State}."
+tpl_gen_fsm = "-module($(n))." \
+	"-behaviour(gen_fsm)." \
+	"" \
+	"%% API." \
+	"-export([start_link/0])." \
+	"" \
+	"%% gen_fsm." \
+	"-export([init/1])." \
+	"-export([state_name/2])." \
+	"-export([handle_event/3])." \
+	"-export([state_name/3])." \
+	"-export([handle_sync_event/4])." \
+	"-export([handle_info/3])." \
+	"-export([terminate/3])." \
+	"-export([code_change/4])." \
+	"" \
+	"-record(state, {" \
+	"})." \
+	"" \
+	"%% API." \
+	"" \
+	"-spec start_link() -> {ok, pid()}." \
+	"start_link() ->" \
+	"	gen_fsm:start_link(?MODULE, [], [])." \
+	"" \
+	"%% gen_fsm." \
+	"" \
+	"init([]) ->" \
+	"	{ok, state_name, \#state{}}." \
+	"" \
+	"state_name(_Event, StateData) ->" \
+	"	{next_state, state_name, StateData}." \
+	"" \
+	"handle_event(_Event, StateName, StateData) ->" \
+	"	{next_state, StateName, StateData}." \
+	"" \
+	"state_name(_Event, _From, StateData) ->" \
+	"	{reply, ignored, state_name, StateData}." \
+	"" \
+	"handle_sync_event(_Event, _From, StateName, StateData) ->" \
+	"	{reply, ignored, StateName, StateData}." \
+	"" \
+	"handle_info(_Info, StateName, StateData) ->" \
+	"	{next_state, StateName, StateData}." \
+	"" \
+	"terminate(_Reason, _StateName, _StateData) ->" \
+	"	ok." \
+	"" \
+	"code_change(_OldVsn, StateName, StateData, _Extra) ->" \
+	"	{ok, StateName, StateData}."
 tpl_cowboy_http = "-module($(n))." \
 	"-behaviour(cowboy_http_handler)." \
 	"" \
@@ -868,6 +928,10 @@ distclean-elvis:
 # Copyright (c) 2013-2014, Loïc Hoguin <essen@ninenines.eu>
 # This file is part of erlang.mk and subject to the terms of the ISC License.
 
+# Configuration.
+
+DTL_FULL_PATH ?= 0
+
 # Verbosity.
 
 dtl_verbose_0 = @echo " DTL   " $(filter %.dtl,$(?F));
@@ -878,9 +942,11 @@ dtl_verbose = $(dtl_verbose_$(V))
 define compile_erlydtl
 	$(dtl_verbose) erl -noshell -pa ebin/ $(DEPS_DIR)/erlydtl/ebin/ -eval ' \
 		Compile = fun(F) -> \
-			Module = list_to_atom( \
-				string:to_lower(filename:basename(F, ".dtl")) ++ "_dtl"), \
-			erlydtl:compile(F, Module, [{out_dir, "ebin/"}]) \
+			S = fun (1) -> re:replace(filename:rootname(string:sub_string(F, 11), ".dtl"), "/",  "_",  [{return, list}, global]); \
+				(0) -> filename:basename(F, ".dtl") \
+			end, \
+			Module = list_to_atom(string:to_lower(S($(DTL_FULL_PATH))) ++ "_dtl"), \
+			{ok, _} = erlydtl:compile(F, Module, [{out_dir, "ebin/"}, return_errors, {doc_root, "templates"}]) \
 		end, \
 		_ = [Compile(F) || F <- string:tokens("$(1)", " ")], \
 		init:stop()'
@@ -954,6 +1020,78 @@ escript:: distclean-escript deps app
 distclean-escript:
 	$(gen_verbose) rm -f $(ESCRIPT_NAME)
 
+# Copyright (c) 2014, Enrique Fernandez <enrique.fernandez@erlang-solutions.com>
+# This file is contributed to erlang.mk and subject to the terms of the ISC License.
+
+.PHONY: help-eunit build-eunit eunit distclean-eunit
+
+# Configuration
+
+EUNIT_ERLC_OPTS ?= +debug_info +warn_export_vars +warn_shadow_vars +warn_obsolete_guard -DTEST=1 -DEXTRA=1
+
+EUNIT_DIR ?=
+EUNIT_DIRS = $(sort $(EUNIT_DIR) ebin)
+
+ifeq ($(strip $(EUNIT_DIR)),)
+TAGGED_EUNIT_TESTS = {dir,"ebin"}
+else
+# All modules in EUNIT_DIR
+EUNIT_DIR_MODS = $(notdir $(basename $(shell find $(EUNIT_DIR) -type f -name *.beam)))
+# All modules in 'ebin'
+EUNIT_EBIN_MODS = $(notdir $(basename $(shell find ebin -type f -name *.beam)))
+# Only those modules in EUNIT_DIR with no matching module in 'ebin'.
+# This is done to avoid some tests being executed twice.
+EUNIT_MODS = $(filter-out $(patsubst %,%_tests,$(EUNIT_EBIN_MODS)),$(EUNIT_DIR_MODS))
+TAGGED_EUNIT_TESTS = {dir,"ebin"} $(foreach mod,$(EUNIT_MODS),$(shell echo $(mod) | sed -e 's/\(.*\)/{module,\1}/g'))
+endif
+
+EUNIT_OPTS ?= verbose
+
+# Utility functions
+
+define str-join
+	$(shell echo '$(strip $(1))' | sed -e "s/ /,/g")
+endef
+
+# Core targets.
+
+help:: help-eunit
+
+tests:: eunit
+
+clean:: clean-eunit
+
+# Plugin-specific targets.
+
+EUNIT_RUN = erl \
+	-no_auto_compile \
+	-noshell \
+	-pa $(realpath $(EUNIT_DIR)) $(DEPS_DIR)/*/ebin \
+	-pz $(realpath ebin) \
+	-eval 'case eunit:test([$(call str-join,$(TAGGED_EUNIT_TESTS))], [$(EUNIT_OPTS)]) of ok -> erlang:halt(0); error -> erlang:halt(1) end.'
+
+help-eunit:
+	@printf "%s\n" "" \
+		"EUnit targets:" \
+		"  eunit       Run all the EUnit tests for this project"
+
+ifeq ($(strip $(EUNIT_DIR)),)
+build-eunit:
+else ifeq ($(strip $(EUNIT_DIR)),ebin)
+build-eunit:
+else
+build-eunit:
+	$(gen_verbose) erlc -v $(EUNIT_ERLC_OPTS) -I include/ -o $(EUNIT_DIR) \
+		$(wildcard $(EUNIT_DIR)/*.erl $(EUNIT_DIR)/*/*.erl) -pa ebin/
+endif
+
+eunit: ERLC_OPTS = $(EUNIT_ERLC_OPTS)
+eunit: clean deps app build-eunit
+	$(gen_verbose) $(EUNIT_RUN)
+
+clean-eunit:
+	$(gen_verbose) $(foreach dir,$(EUNIT_DIRS),rm -rf $(dir)/*.beam)
+
 # Copyright (c) 2013-2014, Loïc Hoguin <essen@ninenines.eu>
 # This file is part of erlang.mk and subject to the terms of the ISC License.
 
@@ -966,7 +1104,7 @@ RELX_CONFIG ?= $(CURDIR)/relx.config
 RELX ?= $(CURDIR)/relx
 export RELX
 
-RELX_URL ?= https://github.com/erlware/relx/releases/download/v1.0.2/relx
+RELX_URL ?= https://github.com/erlware/relx/releases/download/v1.1.0/relx
 RELX_OPTS ?=
 RELX_OUTPUT_DIR ?= _rel
 

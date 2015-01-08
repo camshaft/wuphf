@@ -2,10 +2,11 @@ PROJECT = wuphf
 
 # dependencies
 
-DEPS = json_stringify simple_env gun \
+DEPS = json_stringify cowlib simple_env gun \
   cowboy gen_cowboy cowboy_base cowboy_cors cowboy_compiled_router cowboy_dev_logger
 
 dep_cowboy = git https://github.com/ninenines/cowboy 1.0.1
+dep_cowlib = git https://github.com/ninenines/cowlib 1.0.1
 dep_gen_cowboy = git https://github.com/camshaft/gen_cowboy.git
 dep_cowboy_base = git https://github.com/camshaft/cowboy_base.git
 dep_cowboy_cors = git https://github.com/camshaft/cowboy_cors.git
