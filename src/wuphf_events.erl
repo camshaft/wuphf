@@ -4,8 +4,8 @@
 -export([emit_event/4]).
 
 queue(Network, Event, Req) ->
-  case cowboy_req:qs_val(<<"event_url">>, Req) of
-    {undefined, _} ->
+  case cowboy_req:qs_val(<<"event_url">>, Req, <<>>) of
+    {<<>>, _} ->
       ok;
     {EventUrl, Req2} ->
       {Headers, _} = cowboy_req:headers(Req2),

@@ -29,6 +29,24 @@ terminate(_, _, _) ->
   ok.
 
 share(Params, Req) ->
+  case lists:keymember(<<"override">>, 1, Params) of
+    true ->
+      share_open_graph(Params, Req);
+    _ ->
+      share_individual(Params, Req)
+  end.
+
+share_individual(Params, Req) ->
+  Out = [
+    {<<"app_id">>, fast_key:get(<<"fb_app_id">>, Params, <<>>)},
+    {<<"display">>, <<"popup">>},
+    {<<"redirect_uri">>, redirect_url(Req)},
+    {<<"version">>, <<"v2.2">>},
+    {<<"href">>, fast_key:get(<<"url">>, Params, <<>>)}
+  ],
+  {ok, <<"https://www.facebook.com/v2.2/dialog/share?", (cow_qs:qs(Out))/binary>>}.
+
+share_open_graph(Params, Req) ->
   case share_params(Params, [], undefined) of
     {ok, Obj} ->
       Out = [
@@ -65,7 +83,12 @@ redirect_url(Req) ->
     {<<"network">>, <<"facebook">>},
     {<<"event_url">>, EventUrl}
   ],
-  {Root, _} = cowboy_req:qs_val(<<"redirect_uri">>, Req, cowboy_base:resolve([<<"redirect">>], Req)),
+  Root = case cowboy_req:qs_val(<<"redirect_uri">>, Req, <<>>) of
+    {<<>>, _} ->
+      cowboy_base:resolve([<<"redirect">>], Req);
+    {R, _} ->
+      R
+  end,
   <<Root/binary, "?", (cow_qs:qs(Out))/binary>>.
 
 make_ogo(Obj, AppID) ->

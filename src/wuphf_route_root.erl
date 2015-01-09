@@ -18,6 +18,7 @@ handle(Req, State) ->
   {Hashtags, Req2} = cowboy_req:qs_val(<<"hashtags">>, Req, <<>>),
   {EventUrl, Req2} = cowboy_req:qs_val(<<"event_url">>, Req, <<>>),
   {RedirectURI, Req2} = cowboy_req:qs_val(<<"redirect_uri">>, Req, <<>>),
+  {Override, Req2} = cowboy_req:qs_val(<<"override">>, Req, <<>>),
 
   Body = json_stringify:from_term(#{
     <<"facebook">> => network(#{
@@ -52,6 +53,10 @@ handle(Req, State) ->
       <<"redirect_uri">> => #{
         <<"type">> => <<"url">>,
         <<"value">> => RedirectURI
+      },
+      <<"override">> => #{
+        <<"type">> => <<"checkbox">>,
+        <<"value">> => Override
       }
     }, <<"facebook">>, Req),
     <<"twitter">> => network(#{
@@ -211,6 +216,14 @@ handle(Req, State) ->
         <<"event_url">> => #{
           <<"type">> => <<"url">>,
           <<"value">> => EventUrl
+        },
+        <<"redirect_uri">> => #{
+          <<"type">> => <<"url">>,
+          <<"value">> => RedirectURI
+        },
+        <<"override">> => #{
+          <<"type">> => <<"checkbox">>,
+          <<"value">> => Override
         }
       }
     }
