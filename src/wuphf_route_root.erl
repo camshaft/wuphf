@@ -17,6 +17,7 @@ handle(Req, State) ->
   {Via, Req2} = cowboy_req:qs_val(<<"via">>, Req, <<>>),
   {Hashtags, Req2} = cowboy_req:qs_val(<<"hashtags">>, Req, <<>>),
   {EventUrl, Req2} = cowboy_req:qs_val(<<"event_url">>, Req, <<>>),
+  {RedirectURI, Req2} = cowboy_req:qs_val(<<"redirect_uri">>, Req, <<>>),
 
   Body = json_stringify:from_term(#{
     <<"facebook">> => network(#{
@@ -47,6 +48,10 @@ handle(Req, State) ->
       <<"event_url">> => #{
         <<"type">> => <<"url">>,
         <<"value">> => EventUrl
+      },
+      <<"redirect_uri">> => #{
+        <<"type">> => <<"url">>,
+        <<"value">> => RedirectURI
       }
     }, <<"facebook">>, Req),
     <<"twitter">> => network(#{
