@@ -171,7 +171,7 @@ handle(Req, State) ->
       <<"action">> => cowboy_base:resolve([], Req),
       <<"method">> => <<"GET">>,
       <<"input">> => #{
-        <<"app_id">> => #{
+        <<"fb_app_id">> => #{
           <<"type">> => <<"text">>,
           <<"value">> => AppID
         },

@@ -65,7 +65,8 @@ redirect_url(Req) ->
     {<<"network">>, <<"facebook">>},
     {<<"event_url">>, EventUrl}
   ],
-  cowboy_base:resolve([<<"redirect?", (cow_qs:qs(Out))/binary>>], Req).
+  {Root, _} = cowboy_req:qs_val(<<"redirect_uri">>, Req, cowboy_base:resolve([<<"redirect">>], Req)),
+  <<Root/binary, (cow_qs:qs(Out))/binary>>.
 
 make_ogo(Obj, AppID) ->
   {ok, Token} = get_token(AppID),
