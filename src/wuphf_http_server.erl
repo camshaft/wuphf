@@ -11,7 +11,7 @@ init() ->
 middlewares() ->
   dev_middlewares() ++ [
     cowboy_cors:init([handle_options]),
-    cowboy_base:init(#{proto => <<"x-forwarded-proto">>}),
+    cowboy_base:init(#{proto => <<"x-forwarded-proto">>, port => <<"x-forwarded-port">>}),
     wuphf_router,
     cowboy_handler
   ].
