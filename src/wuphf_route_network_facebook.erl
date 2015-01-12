@@ -54,7 +54,7 @@ sharer(Params, Req) ->
   Out = sharer_params(Params, [
     {<<"redirect_uri">>, redirect_url(Req)}
   ]),
-  <<"https://www.facebook.com/sharer.php?", (cow_qs:qs(Out))/binary>>.
+  {ok, <<"https://www.facebook.com/sharer.php?", (cow_qs:qs(Out))/binary>>}.
 
 sharer_params([], Acc) ->
   Acc;
