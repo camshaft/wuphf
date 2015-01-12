@@ -29,12 +29,39 @@ terminate(_, _, _) ->
   ok.
 
 share(Params, Req) ->
-  case lists:keymember(<<"override">>, 1, Params) of
+  case is_fb_app(Req) of
     true ->
-      share_open_graph(Params, Req);
+      sharer(Params, Req);
     _ ->
-      share_individual(Params, Req)
+      case lists:keymember(<<"override">>, 1, Params) of
+        true ->
+          share_open_graph(Params, Req);
+        _ ->
+          share_individual(Params, Req)
+      end
   end.
+
+is_fb_app(Req) ->
+  {UA, _} = cowboy_req:header(<<"user-agent">>, Req, <<>>),
+  case binary:split(UA, <<"FBAN/FBIOS">>) of
+    [_] ->
+      false;
+    _ ->
+      true
+  end.
+
+sharer(Params, Req) ->
+  Out = sharer_params(Params, [
+    {<<"redirect_uri">>, redirect_url(Req)}
+  ]),
+  <<"https://www.facebook.com/sharer.php?", (cow_qs:qs(Out))/binary>>.
+
+sharer_params([], Acc) ->
+  Acc;
+sharer_params([{<<"url">>, Url}|Rest], Acc) ->
+  sharer_params(Rest, [{<<"u">>, Url}|Acc]);
+sharer_params([_|Rest], Acc) ->
+  sharer_params(Rest, Acc).
 
 share_individual(Params, Req) ->
   Out = [
