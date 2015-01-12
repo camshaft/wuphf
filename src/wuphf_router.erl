@@ -11,5 +11,5 @@
 -get({"/networks/linkedin", wuphf_route_network_linkedin}).
 -get({"/networks/pinterest", wuphf_route_network_pinterest}).
 -get({"/networks/reddit", wuphf_route_network_reddit}).
--get({"/networks/tubmlr", wuphf_route_network_tumblr}).
+-get({"/networks/tumblr", wuphf_route_network_tumblr}).
 -get({"/networks/twitter", wuphf_route_network_twitter}).
