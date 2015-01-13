@@ -14,7 +14,7 @@ handle(Req, State) ->
 
   Body = [
     <<"<!DOCTYPE html><html><head></head><body>">>,
-    <<"<script>if(window.parent!==window)window.close();</script>">>,
+    <<"<script>window.close();</script>">>,
     <<"</body></html>">>
   ],
 
