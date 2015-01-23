@@ -31,6 +31,8 @@ share_params([{<<"url">>, _} = Url|Rest], Acc) ->
   share_params(Rest, [Url|Acc]);
 share_params([{<<"title">>, Title}|Rest], Acc) ->
   share_params(Rest, [{<<"description">>, Title}|Acc]);
+share_params([{<<"image">>, <<"//", Val/binary>>}|Rest], Acc) ->
+  share_params(Rest, [{<<"media">>, <<"https://", Val/binary>>}|Acc]);
 share_params([{<<"image">>, Image}|Rest], Acc) ->
   share_params(Rest, [{<<"media">>, Image}|Acc]);
 share_params([_|Rest], Acc) ->

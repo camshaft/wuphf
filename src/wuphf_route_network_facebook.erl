@@ -97,6 +97,8 @@ share_params([{<<"url">>, Val}|Rest], Acc, AppID) ->
   share_params(Rest, [{<<"url">>, Val}|Acc], AppID);
 share_params([{<<"title">>, Val}|Rest], Acc, AppID) ->
   share_params(Rest, [{<<"title">>, Val}|Acc], AppID);
+share_params([{<<"image">>, <<"//", Val/binary>>}|Rest], Acc, AppID) ->
+  share_params(Rest, [{<<"image">>, <<"https://", Val/binary>>}|Acc], AppID);
 share_params([{<<"image">>, Val}|Rest], Acc, AppID) ->
   share_params(Rest, [{<<"image">>, Val}|Acc], AppID);
 share_params([{<<"description">>, Val}|Rest], Acc, AppID) ->
