@@ -17,7 +17,7 @@ handle(Req, State) ->
     {<<"cache-control">>, <<"max-age=2629743">>}
   ], Body, Req2),
 
-  wuphf_events:queue(<<"email">>, <<"opened">>, Req3),
+  wuphf_events:queue(<<"email">>, <<"shared">>, Req3),
 
   {ok, Req3, State}.
 

@@ -10,7 +10,7 @@ init(_Type, Req, _Args) ->
 handle(Req, State) ->
   {Network, Req2} = cowboy_req:qs_val(<<"network">>, Req, <<"facebook">>),
 
-  wuphf_events:queue(Network, <<"send">>, Req2),
+  wuphf_events:queue(Network, <<"shared">>, Req2),
 
   Body = [
     <<"<!DOCTYPE html><html><head></head><body>">>,

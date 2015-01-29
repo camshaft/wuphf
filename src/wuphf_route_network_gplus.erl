@@ -14,7 +14,7 @@ handle(Req, State) ->
     {<<"location">>, share(Params, Req2)}
   ], Req2),
 
-  wuphf_events:queue(<<"gplus">>, <<"opened">>, Req3),
+  wuphf_events:queue(<<"gplus">>, <<"shared">>, Req3),
 
   {ok, Req3, State}.
 
