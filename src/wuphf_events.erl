@@ -16,6 +16,10 @@ queue(Network, Event, Req) ->
   end.
 
 emit_event(Url, Headers, Network, Event) ->
+  {Time, _} = timer:tc(fun perform_request/4, [Url, Headers, Network, Event]),
+  io:format("at=event measure#api_request=~p url=~s network=~s event=~s~n", [Time, Url, Network, Event]).
+
+perform_request(Url, Headers, Network, Event) ->
   {ok, {Scheme, _UserInfo, Host, Port, Path, Query}} = http_uri:parse(binary_to_list(Url)),
   {ok, Pid} = gun:open(Host, Port, [{type, type(Scheme)}]),
   Ref = gun:post(Pid, [Path, Query], Headers, json_stringify:from_term(#{
