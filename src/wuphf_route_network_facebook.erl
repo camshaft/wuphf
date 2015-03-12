@@ -73,6 +73,8 @@ feed_params([{<<"caption">>, _} = Caption|Rest], Acc) ->
   feed_params(Rest, [Caption|Acc]);
 feed_params([{<<"description">>, _} = Description|Rest], Acc) ->
   feed_params(Rest, [Description|Acc]);
+feed_params([{<<"image">>, <<"//", Image/binary>>}|Rest], Acc) ->
+  feed_params(Rest, [{<<"picture">>, <<"http://", Image/binary>>}|Acc]);
 feed_params([{<<"image">>, Image}|Rest], Acc) ->
   feed_params(Rest, [{<<"picture">>, Image}|Acc]);
 feed_params([{<<"url">>, Url}|Rest], Acc) ->
