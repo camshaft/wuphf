@@ -4,7 +4,12 @@
 -export([handle/2]).
 -export([terminate/3]).
 
+%% private
 -export([make_ogo/2]).
+-export([sharer/2]).
+-export([share_open_graph/2]).
+-export([share_individual/2]).
+-export([share_feed/2]).
 
 init(_Type, Req, _Args) ->
   {ok, Req, noop}.
@@ -35,7 +40,8 @@ share(Params, Req) ->
     _ ->
       case lists:keymember(<<"override">>, 1, Params) of
         true ->
-          share_open_graph(Params, Req);
+          share_feed(Params, Req);
+          %share_open_graph(Params, Req);
         _ ->
           share_individual(Params, Req)
       end
@@ -49,6 +55,30 @@ is_fb_app(Req) ->
     _ ->
       true
   end.
+
+share_feed(Params, Req) ->
+  Out = feed_params(Params, [
+    {<<"app_id">>, fast_key:get(<<"fb_app_id">>, Params, <<>>)},
+    {<<"display">>, <<"popup">>},
+    {<<"e2e">>, <<"{}">>},
+    {<<"redirect_uri">>, redirect_url(Req)}
+  ]),
+  {ok, <<"https://www.facebook.com/dialog/feed?", (cow_qs:qs(Out))/binary>>}.
+
+feed_params([], Acc) ->
+  Acc;
+feed_params([{<<"title">>, Title}|Rest], Acc) ->
+  feed_params(Rest, [{<<"name">>, Title}|Acc]);
+feed_params([{<<"caption">>, _} = Caption|Rest], Acc) ->
+  feed_params(Rest, [Caption|Acc]);
+feed_params([{<<"description">>, _} = Description|Rest], Acc) ->
+  feed_params(Rest, [Description|Acc]);
+feed_params([{<<"image">>, Image}|Rest], Acc) ->
+  feed_params(Rest, [{<<"picture">>, Image}|Acc]);
+feed_params([{<<"url">>, Url}|Rest], Acc) ->
+  feed_params(Rest, [{<<"link">>, Url}|Acc]);
+feed_params([_|Rest], Acc) ->
+  feed_params(Rest, Acc).
 
 sharer(Params, Req) ->
   Out = sharer_params(Params, [
