@@ -38,12 +38,13 @@ share(Params, Req) ->
     true ->
       sharer(Params, Req);
     _ ->
-      case lists:keymember(<<"override">>, 1, Params) of
-        true ->
-          share_feed(Params, Req);
-          %share_open_graph(Params, Req);
+      case fast_key:get(<<"override">>, Params, <<"0">>) of
+        <<"0">> ->
+          share_individual(Params, Req);
+        <<"false">> ->
+          share_individual(Params, Req);
         _ ->
-          share_individual(Params, Req)
+          share_feed(Params, Req)
       end
   end.
 
